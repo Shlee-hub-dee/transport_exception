@@ -100,9 +100,9 @@
 
 <script>
 /* ====== SET THIS after deploying Code.gs as a Web App ====== */
-const SCRIPT_URL = "https://script.google.com/a/macros/oneacrefund.org/s/AKfycbwJHLo-2umpXZB0vQniPxV3kztLFPRQTD7NaokJQyhcw-qFI85wfHMWDukPDKde7unS/exec"; // 
+const SCRIPT_URL = "https://script.google.com/a/macros/oneacrefund.org/s/AKfycbwJHLo-2umpXZB0vQniPxV3kztLFPRQTD7NaokJQyhcw-qFI85wfHMWDukPDKde7unS/exec"; //
 /* Regions/rates load from the script; these are fallbacks if URL is blank */
-let CONFIG = { regions:["Region A","Region B","Region C"], rates:{matatu:0,bike:0} };
+let CONFIG = { regions:["Rift","Mt. Kenya","Coast","Lower Western","Upper Western","Nyanza"], rates:{matatu:80,bike:150} };
 let ROWS = [];
 
 const $ = s => document.querySelector(s);
@@ -165,6 +165,11 @@ function renderForm(){
   <div class="grid">
     <div><label>Region</label><select id="f-region">${regionOpts}</select></div>
     <div><label>Requester name</label><input id="f-requester" placeholder="Your name"></div>
+    <div><label>Email</label><input id="f-email" type="email" placeholder="you@oneacrefund.org"></div>
+    <div><label>Territory code</label><input id="f-territory" placeholder="e.g. RTA01"></div>
+    <div><label>Area code</label><input id="f-area" placeholder="e.g. Kimwarer T1"></div>
+    <div><label>Zone code</label><input id="f-zone" placeholder="e.g. Z03"></div>
+    <div class="full"><span class="hint">Employee OU ID: fill at least one of Territory, Area or Zone.</span></div>
     <div class="full"><label>Exception type</label>
       <select id="f-type">
         <option>Missing Distance</option>
@@ -208,6 +213,10 @@ function renderForm(){
     const p = {
       action:"submit",
       region:$("#f-region").value, requester:$("#f-requester").value.trim(),
+      email:$("#f-email").value.trim(),
+      territoryCode:$("#f-territory").value.trim(),
+      areaCode:$("#f-area").value.trim(),
+      zoneCode:$("#f-zone").value.trim(),
       exceptionType:typeSel.value, transportDate:$("#f-date").value,
       transportReference:$("#f-ref").value.trim(), transportMode:$("#f-mode").value,
       origin:$("#f-origin")?.value||"", destination:$("#f-dest")?.value||"",
@@ -218,6 +227,8 @@ function renderForm(){
       evidenceLink:$("#f-ev").value.trim()
     };
     if(!p.requester||!p.reason){ toast("Requester and reason are required"); return; }
+    if(!p.email || !/^\S+@\S+\.\S+$/.test(p.email)){ toast("A valid email is required"); return; }
+    if(!p.territoryCode && !p.areaCode && !p.zoneCode){ toast("Fill at least one OU ID: Territory, Area or Zone"); return; }
     if(!p.mpesaReference){ toast("Mpesa reference is required"); return; }
     if(!file){ toast("Mpesa screenshot is required"); return; }
     if(file.size > 5*1024*1024){ toast("Screenshot must be under 5 MB"); return; }
@@ -248,6 +259,8 @@ function card(row, withActions){
     </div>
     <dl class="kv">
       <dt>Requester</dt><dd>${row.Requester||"—"}</dd>
+      <dt>Email</dt><dd>${row.Email||"—"}</dd>
+      <dt>OU ID</dt><dd>${[row["Territory Code"],row["Area Code"],row["Zone Code"]].filter(Boolean).join(" · ")||"—"}</dd>
       <dt>Mode</dt><dd>${row["Transport Mode"]||"—"}</dd>
       <dt>Route</dt><dd>${row.Route || [row.Origin,row.Destination].filter(Boolean).join(" → ") || "—"}</dd>
       <dt>Distance</dt><dd>${dist} km ${rate}</dd>
